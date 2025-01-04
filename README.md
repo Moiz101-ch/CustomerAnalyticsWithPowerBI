@@ -16,8 +16,7 @@ This repository showcases a project that segments customers based on their purch
 ## Workflow  
 
 ### 1. Data Collection  
-The dataset used in this project is sourced from Kaggle: [Customer Segmentation Dataset](https://www.kaggle.com/code/fabiendaniel/customer-segmentation/input).  
-It contains customer demographic and purchasing information, including:  
+The dataset contains customer demographic and purchasing information, including:  
 - InvoiceNo  
 - StockCode  
 - Description  
