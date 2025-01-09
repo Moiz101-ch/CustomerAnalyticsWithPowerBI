@@ -53,7 +53,7 @@ df['Revenue'] = df['Quantity'] * df['UnitPrice']
 df.to_csv('cleaned_data.csv')
 print("\nData exported for Power BI visualization")
 
-# Aggregate data by time
+# Aggregate data by Day
 time_series_data = df.resample('D', on='InvoiceDate').sum()[['Revenue']]
 
 # print("\nAggregated time series data:")
