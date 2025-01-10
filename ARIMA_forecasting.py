@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.arima.model import ARIMA
@@ -56,12 +57,23 @@ print("\nData exported for Power BI visualization")
 # Aggregate data by Day
 time_series_data = df.resample('D', on='InvoiceDate').sum()[['Revenue']]
 
+# Log Transformation
+if time_series_data['Revenue'].min() > 0:  # Log transformation works only if data is positive
+    revenue_log = np.log(time_series_data ['Revenue'])
+else:
+    print("Log transformation skipped due to negative/zero values.")
+
+# Min-Max Scaling
+scaler = MinMaxScaler(feature_range=(0, 1))
+revenue_scaled = scaler.fit_transform(time_series_data['Revenue'].values.reshape(-1, 1))
+time_series_data["Revenue_Scaled"] = revenue_scaled
+
 # print("\nAggregated time series data:")
 print(time_series_data.head())
 
 # Visualize the time series
 plt.figure(figsize=(12, 6))
-plt.plot(time_series_data.index, time_series_data['Revenue'], label='Daily Revenue', color='blue')
+plt.plot(time_series_data.index, time_series_data["Revenue_Scaled"], label='Daily Revenue', color='blue')
 plt.title('Daily Revenue Over Time')
 plt.xlabel('Date')
 plt.ylabel('Revenue')
@@ -69,7 +81,7 @@ plt.legend()
 plt.show()
 
 # Perform ADF Test to check stationarity
-result = adfuller(time_series_data['Revenue'])
+result = adfuller(time_series_data["Revenue_Scaled"])
 print("\nADF Test Results:")
 print(f"ADF Statistic: {result[0]}")
 print(f"p-value: {result[1]}")
@@ -84,7 +96,7 @@ else:
     print("\nThe time series is not stationary (p-value > 0.05). Differencing is needed.")
 
 # Differencing the time series as it is not Stationary
-time_series_data['Revenue_diff'] = time_series_data['Revenue'].diff().dropna()
+time_series_data['Revenue_diff'] = time_series_data["Revenue_Scaled"].diff().dropna()
 time_series_data.dropna(subset=['Revenue_diff'], inplace=True)
 
 # Check stationarity after differencing
@@ -204,8 +216,3 @@ plt.xlabel('Date')
 plt.ylabel('Revenue')
 plt.legend()
 plt.show()
-
-
-
-
-
