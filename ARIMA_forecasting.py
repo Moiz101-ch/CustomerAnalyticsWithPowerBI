@@ -57,16 +57,27 @@ print("\nData exported for Power BI visualization")
 # Aggregate data by Day
 time_series_data = df.resample('D', on='InvoiceDate').sum()[['Revenue']]
 
-# Log Transformation
-if time_series_data['Revenue'].min() > 0:  # Log transformation works only if data is positive
-    revenue_log = np.log(time_series_data ['Revenue'])
-else:
-    print("Log transformation skipped due to negative/zero values.")
+# Small constant to handle zero values
+log_offset = 1e-6
 
-# Min-Max Scaling
-scaler = MinMaxScaler(feature_range=(0, 1))
-revenue_scaled = scaler.fit_transform(time_series_data['Revenue'].values.reshape(-1, 1))
-time_series_data["Revenue_Scaled"] = revenue_scaled
+# Check for zero or negative values
+if time_series_data['Revenue'].min() >= 0:  # Ensure no negative values
+    revenue_log = np.log(time_series_data['Revenue'] + log_offset)  # Adding offset to handle zeroes
+    print("Log transformation applied successfully (with offset for zeros).")
+
+    # Min-Max Scaling on log-transformed data
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    revenue_scaled = scaler.fit_transform(revenue_log.values.reshape(-1, 1))
+    time_series_data["Revenue_Scaled"] = revenue_scaled
+    print("Min-Max scaling applied to log-transformed data successfully.")
+else:
+    print(f"Log transformation skipped: Negative values found. Minimum Revenue value is {time_series_data['Revenue'].min()}.")
+
+    # Min-Max Scaling on original data
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    revenue_scaled = scaler.fit_transform(time_series_data['Revenue'].values.reshape(-1, 1))
+    time_series_data["Revenue_Scaled"] = revenue_scaled
+    print("Min-Max scaling applied to original Revenue data successfully.")
 
 # print("\nAggregated time series data:")
 print(time_series_data.head())
@@ -95,23 +106,8 @@ if result[1] <= 0.05:
 else:
     print("\nThe time series is not stationary (p-value > 0.05). Differencing is needed.")
 
-# Differencing the time series as it is not Stationary
-time_series_data['Revenue_diff'] = time_series_data["Revenue_Scaled"].diff().dropna()
-time_series_data.dropna(subset=['Revenue_diff'], inplace=True)
-
-# Check stationarity after differencing
-result_diff = adfuller(time_series_data['Revenue_diff'].dropna())
-print("\nADF Test Results After Differencing:")
-print(f"ADF Statistic: {result_diff[0]}")
-print(f"p-value: {result_diff[1]}")
-
-if result_diff[1] <= 0.05:
-    print("\nThe differenced time series is stationary (p-value <= 0.05).")
-else:
-    print("\nThe differenced time series is still not stationary (p-value > 0.05).")
-
 # Decompose the time series
-decomposition = seasonal_decompose(time_series_data['Revenue_diff'], model='additive', period=30)
+decomposition = seasonal_decompose(time_series_data["Revenue_Scaled"], model='additive', period=30)
 
 # Plot the decomposition
 plt.figure(figsize=(12, 8))
@@ -169,7 +165,7 @@ print("Performing Grid Search for ARIMA parameters...")
 for pdq in pdq_combinations:
     try:
         # Fit ARIMA model
-        model = ARIMA(time_series_data['Revenue_diff'], order=pdq)
+        model = ARIMA(time_series_data["Revenue_Scaled"], order=pdq)
         model_fit = model.fit()
 
         # Check AIC value
@@ -196,7 +192,7 @@ train = time_series_data[:int(0.8 * len(time_series_data))]
 test = time_series_data[int(0.8 * len(time_series_data)):]
 
 # Fit ARIMA model using determined (p, d, q)
-model = ARIMA(time_series_data['Revenue_diff'], order=(4, 0, 3)) 
+model = ARIMA(time_series_data["Revenue_Scaled"], order=(4, 0, 2)) 
 arima_model = model.fit()
 
 # Summary of the model
@@ -208,8 +204,8 @@ forecast = arima_model.forecast(steps=len(test))
 
 # Plot the forecast
 plt.figure(figsize=(12, 6))
-plt.plot(train.index, train['Revenue_diff'], label='Train Data')
-plt.plot(test.index, test['Revenue_diff'], label='Test Data', color='orange')
+plt.plot(train.index, train["Revenue_Scaled"], label='Train Data')
+plt.plot(test.index, test["Revenue_Scaled"], label='Test Data', color='orange')
 plt.plot(test.index, forecast, label='Forecast', color='green')
 plt.title('ARIMA Model - Revenue Forecast')
 plt.xlabel('Date')
