@@ -47,6 +47,7 @@ plt.show()
 # Compare the forecast with actual values in the test set
 forecasted_values = forecast[['ds', 'yhat']].tail(len(test))
 actual_values = test[['ds', 'y']]
+print(f'Actual Values: {actual_values}')
 
 # Merge predicted and actual values for evaluation
 comparison_df = pd.merge(forecasted_values, actual_values, on='ds', how='left')
