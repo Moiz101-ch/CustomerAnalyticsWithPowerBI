@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 
 # Load dataset
-time_series_data = pd.read_csv('cleaned_data.csv', encoding='iso-8859-1', low_memory=False)
+time_series_data = pd.read_csv('data/cleaned_data.csv', encoding='iso-8859-1', low_memory=False)
 
 # Convert InvoiceDate to datetime format
 time_series_data['InvoiceDate'] = pd.to_datetime(time_series_data['InvoiceDate'])

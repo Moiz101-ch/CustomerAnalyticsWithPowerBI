@@ -13,7 +13,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 warnings.filterwarnings("ignore")
 
 # Load dataset
-df = pd.read_csv('data.csv', encoding='iso-8859-1')
+df = pd.read_csv('data/data.csv', encoding='iso-8859-1')
 
 # Display the first few rows of the dataset
 print("Initial Dataset Overview:\n", df.head())
@@ -51,7 +51,7 @@ df = df.drop_duplicates()
 df['Revenue'] = df['Quantity'] * df['UnitPrice']
 
 # Export data for Power BI
-df.to_csv('cleaned_data.csv')
+df.to_csv('data/cleaned_data.csv')
 print("\nData exported for Power BI visualization")
 
 # Aggregate data by Day

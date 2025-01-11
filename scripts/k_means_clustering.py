@@ -6,7 +6,7 @@ from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 
 # Load dataset
-df = pd.read_csv('cleaned_data.csv', encoding='iso-8859-1', low_memory=False)
+df = pd.read_csv('data/cleaned_data.csv', encoding='iso-8859-1', low_memory=False)
 
 # Convert InvoiceDate to datetime
 df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate'])
