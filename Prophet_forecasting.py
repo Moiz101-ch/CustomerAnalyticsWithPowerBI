@@ -28,19 +28,38 @@ train = daily_data[daily_data['ds'] < '2011-01-01']  # Use data before 2011 for 
 test = daily_data[daily_data['ds'] >= '2011-01-01']  # Use data after 2011 for testing
 
 # Step 7: Initialize and fit the Prophet model
-model = Prophet(daily_seasonality=True)  # Enable daily seasonality for high-frequency data
+model = Prophet()  # Enable daily seasonality for high-frequency data
 model.add_country_holidays(country_name='UK')  # Add UK holidays
 model.fit(train)
 
 # Make future dataframe for forecasting
-future = model.make_future_dataframe(train, periods = 365)  # Forecast for 1 year ahead
+future = model.make_future_dataframe(periods = 30)  # Forecast for 1 year ahead
 forecast = model.predict(future)
 
-# # Visualize the forecast
-# fig = model.plot(forecast)
-# plt.title("Revenue Forecast with Prophet")
-# plt.xlabel("Date")
-# plt.ylabel("Revenue")
-# plt.show()
+# Visualize the forecast
+fig = model.plot(forecast)
+plt.title("Revenue Forecast with Prophet")
+plt.xlabel("Date")
+plt.ylabel("Revenue")
+plt.show()
 
+# Evaluate Model Performance
+# Compare the forecast with actual values in the test set
+forecasted_values = forecast[['ds', 'yhat']].tail(len(test))
+actual_values = test[['ds', 'y']]
 
+# Merge predicted and actual values for evaluation
+comparison_df = pd.merge(forecasted_values, actual_values, on='ds', how='left')
+comparison_df['error'] = comparison_df['y'] - comparison_df['yhat']
+
+# Calculate RMSE (Root Mean Squared Error)
+rmse = np.sqrt(np.mean(comparison_df['error']**2))
+print(f'RMSE: {rmse}')
+
+# Interactive plot using Plotly for better visualization
+trace1 = go.Scatter(x=comparison_df['ds'], y=comparison_df['y'], mode='lines', name='Actual')
+trace2 = go.Scatter(x=comparison_df['ds'], y=comparison_df['yhat'], mode='lines', name='Predicted')
+
+layout = go.Layout(title="Actual vs Predicted Revenue", xaxis={'title': 'Date'}, yaxis={'title': 'Revenue'})
+fig = go.Figure(data=[trace1, trace2], layout=layout)
+fig.show()
